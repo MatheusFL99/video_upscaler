@@ -1,0 +1,55 @@
+name: CI/CD do Aplicativo Flutter Desktop
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build_windows:
+    name: Build para Windows
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout do Código
+        uses: actions/checkout@v4
+
+      - name: Configurar o Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          flutter-version: '3.35.x'
+
+      - name: Baixar as dependências do Dart
+        run: flutter pub get
+
+      - name: Ativar o Desktop para Windows
+        run: flutter config --enable-windows-desktop
+
+      - name: Executar o Build para Windows
+        run: flutter build windows --release
+
+      - name: Compactar Arquivos de Build
+        run: |
+          Compress-Archive -Path 'build/windows/runner/Release/*' -DestinationPath 'video_upscaler_windows_build.zip'
+
+      - name: Criar um Release no GitHub
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          release_name: Release v1.0.${{ github.run_number }}
+          draft: true
+          prerelease: false
+
+      - name: Fazer o Upload do Arquivo de Build para a Release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./video_upscaler_windows_build.zip
+          asset_name: video_upscaler_windows_build.zip
+          asset_content_type: application/zip
