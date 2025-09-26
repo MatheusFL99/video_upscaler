@@ -1,4 +1,5 @@
 name: CI/CD do Aplicativo Flutter Desktop
+
 on:
   push:
     branches:
@@ -18,7 +19,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: "stable"
-          flutter-version: "3.35.x"
+          flutter-version: "3.x.x"
 
       - name: Baixar as dependências do Dart
         run: flutter pub get
@@ -29,8 +30,16 @@ jobs:
       - name: Executar o Build para Windows
         run: flutter build windows --release
 
+      - name: Encontrar o caminho da build
+        id: get_build_path
+        shell: pwsh
+        run: |
+          $buildPath = Get-ChildItem -Path 'build\windows\runner' -Directory | Where-Object { $_.Name -ne 'Debug' } | Select-Object -ExpandProperty FullName
+          echo "BUILD_PATH=$buildPath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8
+
       - name: Compactar Arquivos de Build
-        run: Compress-Archive -Path 'build/windows/runner/x64/Release' -DestinationPath 'video_upscaler_windows_build.zip' -Force
+        shell: pwsh
+        run: Compress-Archive -Path "${{ env.BUILD_PATH }}\Release\*" -DestinationPath 'video_upscaler_windows_build.zip' -Force
 
       - name: Criar um Release no GitHub
         id: create_release
