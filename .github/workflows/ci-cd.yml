@@ -30,7 +30,7 @@ jobs:
         run: flutter build windows --release
 
       - name: Compactar Arquivos de Build
-        run: Compress-Archive -Path 'build/windows/runner/Release' -DestinationPath 'video_upscaler_windows_build.zip' -Force
+        run: Compress-Archive -Path 'build/windows/runner/x64/Release' -DestinationPath 'video_upscaler_windows_build.zip' -Force
 
       - name: Criar um Release no GitHub
         id: create_release
